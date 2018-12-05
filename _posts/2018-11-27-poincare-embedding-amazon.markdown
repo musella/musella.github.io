@@ -19,20 +19,20 @@ networks designed to either work with graphical data.
 I therefore decided to start exploring this domain, starting from one of the most basic
 tasks related to graphical data, i.e. **graphs embedding**. A graph embedding is a **mapping**
 between **graphs** and a multi-dimensional **manifolds** that associate each node in the graph with
-a point on the manifold.  
+a point on the manifold.
 
 Geometrical embeddings have applications in several sub-fields of machine learning, such as
 **language** representation for NLP systems, **social networks** modelling and knowledge
 modelling.  
 
-Earlier this year, I had followed [this](https://indico.cern.ch/event/687788) excellent
+Earlier this year, I followed [this](https://indico.cern.ch/event/687788) excellent
 seminar from **Maximilian Nickel** about his work [Poincaré Embeddings for Learning
-Hierarchical Representations](https://arxiv.org/abs/1705.08039). The idea of this work is
+Hierarchical Representations](https://arxiv.org/abs/1705.08039). The idea of the paper is
 to exploit hyperbolic geometries to represent hierarchical relations in a graph.  
 
-**Trees** and forests are the prototypical type of hierarchical graphs, and one **hyperbolic
+**Trees** and forests are the prototypical type of hierarchical graphs, and **hyperbolic
 geometries** can be though as the continuous version of trees. A basic property of
-hyperbolic spaces is that the **distance** between elements **grows exponentially** as one move
+hyperbolic spaces is that the **distance** between elements **grows exponentially** as one moves
 away from the centre of the space. This property is completely analogous to the distance
 between nodes in increasingly deeper levels of a tree structure.  
 
@@ -47,23 +47,22 @@ embeddings of a variety of hierarchical graphs. A really **cool idea** in my opi
 
 An **implementation** of the algorithm described in the paper is available in the
 [**gensim**](https://radimrehurek.com/gensim) package, and it is very simple to use. I
-therefore decided to try it out on a dataset that was not considered by the
-paper.
+tried it out on a dataset that was not considered by the paper.
 
 The [SNAP](https://snap.stanford.edu/data) project at Stanford maintains a very nice
-collection of graph data. For the first experiment, I wanted to work on a dataset for
+collection of graph data. For this experiment, I wanted to work on a dataset for
 which ground-truth communities were available. I chose in particular the [Amazon
 co-purchasing network](https://snap.stanford.edu/data/com-Amazon.html). The dataset
 contains roughly 300k nodes and about 1M connections.
 
-The code that I used for this experiment is available on my
+The code that I used available on my
 [github](https://github.com/musella/poincare_embedding) repository, and it is organized in
 three notebooks: one for data preparation, one for training, and a third to inspect the
 trained embedding.
 
 #### Data
 
-The required work for data preparation is minimal, since the dataset has been already
+The work required for data preparation is minimal, since the dataset has been already
 aggregated and formatted by the SNAP team. The only required action was to convert the
 data into the format required by the `gensim.poincare` classes. In particular the package
 expected the graph edges to be encoded as a tab-separated file: each line encodes an edge
@@ -268,7 +267,7 @@ be obseerved looking at the aspect ratio.
 
 ### Wrapping up
 
-That's it for today. The obvious next step will be to increase the dimensionality of the embedding and check how
+That's it for the moment. The obvious next step will be to increase the dimensionality of the embedding and check how
 this influences the observed patterns. Is there an algorithm to extract automathically the ground-truth communities
 from the embedding space? How would it compare with LDA?
 
