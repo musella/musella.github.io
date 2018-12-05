@@ -49,14 +49,14 @@ An **implementation** of the algorithm described in the paper is available in th
 [**gensim**](https://radimrehurek.com/gensim) package, and it is very simple to use. I
 tried it out on a dataset that was not considered by the paper.
 
-The [SNAP](https://snap.stanford.edu/data) project at Stanford maintains a very nice
+The [**SNAP**](https://snap.stanford.edu/data) project at Stanford maintains a very nice
 collection of graph data. For this experiment, I wanted to work on a dataset for
-which ground-truth communities were available. I chose in particular the [Amazon
-co-purchasing network](https://snap.stanford.edu/data/com-Amazon.html). The dataset
+which ground-truth communities were available. I chose in particular the [**Amazon
+co-purchasing network**](https://snap.stanford.edu/data/com-Amazon.html). The dataset
 contains roughly 300k nodes and about 1M connections.
 
-The code that I used available on my
-[github](https://github.com/musella/poincare_embedding) repository, and it is organized in
+The **code** that I used available on **my
+[github](https://github.com/musella/poincare_embedding)** repository, and it is organized in
 three notebooks: one for data preparation, one for training, and a third to inspect the
 trained embedding.
 
@@ -65,7 +65,7 @@ trained embedding.
 The work required for data preparation is minimal, since the dataset has been already
 aggregated and formatted by the SNAP team. The only required action was to convert the
 data into the format required by the `gensim.poincare` classes. In particular the package
-expected the graph edges to be encoded as a tab-separated file: each line encodes an edge
+expected the graph edges to be encoded as a tab-separated file: **each line encodes an edge**
 of the graph and contains the identifier of the connected nodes.
 
 ```
@@ -76,7 +76,7 @@ node2 node3
 ```
 
 This matched the SNAP convention, except for the fact that the latter adds a header to the
-file. Ground truth comminities in the SNAP repository are encoded by listing the nodes
+file. **Ground truth comminities** in the SNAP repository are encoded by lines listing the nodes
 that belong to each community.
 
 ```
@@ -110,8 +110,8 @@ trained at a reduced learning rate.
 
 ### Inspecting the trained model
 
-As for all `gensim` models, the `PoincareModel` model contains the vectors associated to
-each tree element, as well as methods to compute distances and search for nearest
+As for all `gensim` models, the `PoincareModel` **model** contains the **vectors associated** to
+each of the **tree elements**, as well as methods to compute distances and search for nearest
 neighboors.
 One can retrieve this information as
 
@@ -130,15 +130,15 @@ embedding obtained just after burn-in.
 | Embedding heat map after burn-in |
 
 How the shape evolves during the training? Let's inspect the embedding after 30 and 90
-epochs. We can note that the graph tends to be pushed towards the unit circle. This
-indicates that graph does not have a pronounced hierarchical structure, but it is mostly
-constituted by disconnected subgraphs.
+epochs. We can note that the **graph** tends to be **pushed towards the unit circle**. 
+The elements that are not migrated towars the unit circle are those that live at 
+the top of the hierarchy.
 
 {: style="text-align:center"}
 |![amazon_embedding_burn_30_epochs](/assets/amazon_embedding_30_epochs.png) | ![amazon_embedding_burn_90_epochs](/assets/amazon_embedding_90_epochs.png) | 
 | Embedding after 30 epochs | ... and after 90 |
 
-Ok, let's now compare what the model has learned with the ground-tuth communities
+Ok, let's now **compare** what the model has learned with the **ground-tuth** communities
 (i.e. the bundles of products that are typically sold together on Amazon). To do so, we first
 of all need to unpack the data.
 
@@ -210,21 +210,21 @@ And here is the result.
 
 {% include amazon_communities_90_epochs.html %}
 
-We can see that indeed nodes belonging to the same communities get embedded to close-by
+We can see that indeed nodes belonging to the same **communities** get embedded to **close-by**
 positions! Looking more closely, we also notice that some of the communities are often
-split into 2 or 3 disconnected sets. It would be interesting to investigate the reason for
+**split into 2 or 3 disconnected sets**. It would be interesting to investigate the reason for
 this. In particular, whether using a higher embedding space dimensionality would allow
 to reconnect the communities.
 
-Another very visible feature is the fact that the angular size of the communities decreases
-along the radial direction. This is a direct consequence of the hyperbolic geometry of the
-manifold. We can try to quantify this defininig metrics to characterize shape and position
+Another very visible feature is the fact that the **angular size** of the communities **decreases
+along the radial direction**. This is a direct consequence of the hyperbolic geometry of the
+manifold. We can try to **quantify** this defininig metrics to characterize shape and position
 of the communities. In particular we can look at:
-  * the baricenter of each community, in particular in the radial direction;
-  * the geometrical size of the community, that we can estimate looking at diameter,
+  * the **baricenter** of each community, in particular in the radial direction;
+  * the geometrical size of the community, that we can estimate looking at **diameter**,
     i.e. the largest distance between two elements;
-  * the aspect of the comunity (ie round vs elongated), that we can quantify computing the
-    principal axes and evaluating the ratio between the largest and the smallest direction.
+  * the **aspect** of the comunity (ie round vs elongated), that we can quantify computing the
+    **principal axes** and evaluating the ratio between the largest and the smallest direction.
 
 {% highlight python %}
 from sklearn.decomposition import PCA
@@ -256,9 +256,9 @@ aspect_ratios = np.array([ aspect_ratio(x) for x in communities_xy ])
 
 {% endhighlight %}
 
-And here are the distributions of these metrics. We observe that "regular" communities have sizes of the
-order of 0.5, but that there is a long tail in the distribution. Such long tails are due to communities that
-are located closer to the manifold centre, i.e. those that live higher in the hierarchy. A similar picture can
+And here are the distributions of these metrics. We observe that "standard" communities have **diameters** of the
+order of **0.5**, but that there is a **long tail** in the distribution. Such long tails are due to communities that
+are **located** closer to the **manifold centre**, i.e. those that live higher in the hierarchy. A similar picture can
 be obseerved looking at the aspect ratio.
 
 {: style="text-align:center"}
@@ -267,8 +267,8 @@ be obseerved looking at the aspect ratio.
 
 ### Wrapping up
 
-That's it for the moment. The obvious next step will be to increase the dimensionality of the embedding and check how
-this influences the observed patterns. Is there an algorithm to extract automathically the ground-truth communities
+That's it for the moment. The obvious next step will be to **increase the dimensionality** of the embedding and check how
+this influences the observed patterns. Is there an algorithm to **extract** automatically the ground-truth **communities**
 from the embedding space? How would it compare with LDA?
 
 
