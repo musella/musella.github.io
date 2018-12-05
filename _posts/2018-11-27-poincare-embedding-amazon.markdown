@@ -16,7 +16,7 @@ emerging. [Interaction networks](https://arxiv.org/abs/1612.00222),
 [Message passing networks](https://arxiv.org/abs/1704.01212) are all types of neural
 networks designed to either work with graphical data.
 
-I therefore decided to start exploring this domain, starting from one of the most basic
+I recently started exploring this domain, beginning from one of the most basic
 tasks related to graphical data, i.e. **graphs embedding**. A graph embedding is a **mapping**
 between **graphs** and a multi-dimensional **manifolds** that associate each node in the graph with
 a point on the manifold.
