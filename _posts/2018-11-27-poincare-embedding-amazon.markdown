@@ -1,8 +1,6 @@
 ---
 layout: post
 title:  "Poincaré embeddings"
-date:   2018-11-27 00:18:00 +0100
-categories: jekyll update
 ---
 One of the recent trends in machine learning is to move towards of graphical data. Graphs
 are in fact much richer in information compared to images and sequences and they can

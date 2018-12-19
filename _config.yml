@@ -22,7 +22,7 @@ url: "" # the base hostname & protocol for your site, e.g. http://example.com
 # twitter_username: musella
 linkedin_username: pasquale-musella-ab59b929
 github_username: musella
-twitter_username: musellapa
+# twitter_username: musellapa
 google_analytics: UA-130612334-1
 
 # Build settings
