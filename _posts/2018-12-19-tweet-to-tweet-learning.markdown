@@ -3,8 +3,6 @@ layout: post
 title:  "Tweet-to-tweet learning"
 ---
 
-_Note: this post is still work in progress_
-
 **Natural language** processing is arguably one of the most interesting application of
 machine learning. Recurrent neural networks are by far the most successful models in this
 context, with LSTM and GRU networks being the top choice.  
@@ -244,15 +242,195 @@ to the GloVe embedding space, while the lower ones correspond to the hashtags em
 
 ## Learning the sequence distribution
 
-$\log( ~ p(\vec y) ~ )  = \sum_{i=1}^N \log \left( ~p(y_i \vert y_{i-1},...,y_1) ~\right )$
+Now that we have constructed a suitable representation for our sequences, let's tackle the
+problem of learning their distribution. What we will formally do is to estimate the
+density of tweets $t \sim p(t)$ over the tweets space $\mathcal{T}$.
+
+A tweet is a sequence of words $t = \left ( y_1, ... y_n \right ), y_i \in \mathcal{D}$,
+where $\mathcal{D}$ is the dictionary. We will **factorise** $p(t)$ as
+
+{: style="text-align: center"}
+$p(t) = p(y_1, ..., y_n) = p(y_1) \cdot p(y_2\vert y_1) \cdot p(y_3\vert y_2, y_1)  ... \cdot  p(y_n \vert y_{n-1}, ..., y_1 ) $
+
+and train a **recurrent neural network** to estimate $p(y_i \vert y_{i-1}, ..., y_1 )$. The
+distribution $p(y)$ is discrete, and it can be parametrised a multinomial distribution. In particular, we want to find $\hat p_i(y_j \vert \vec \theta )$ such that
+
+{: style="text-align: center"}
+$p( y_j = i \vert y_{i-1}, ..., y_1) = \hat p_i(y_j \vert y_{i-1}, ..., y_1, \vec \theta )$
+
+where $\vec \theta $ are the model parameters and $i$ enumerates all the words in $\mathcal{D}$.
+
+Given our factorisation, the kind of recurrent network that we will train is a **many-to-1**. 
+
+The code to train the network can be found in
+[notebooks/train_rnn.ipnb](https://github.com/musella/twitter_crawl/blob/master/notebooks/train_rnn.ipynb). I
+coded the network in [keras](http://keras.io) and trained the model on the
+[google colaboratory](https://research.google.com/colaboratory/faq.html) service.
+
+As discussed above, the embedding space is factorised into three subspaces: the words
+embedding, the hashtags embedding, and the stop/unkown word annotations.
+
+{% highlight python %}
+inp = Input(X_padded.shape[1:])
+
+W = words_embed_layer(inp)
+H = hash_embed_layer(inp)
+S = stop_layer(inp)
+
+L = Concatenate()([W,H,S])
+{% endhighlight %}
+
+For the **network architecture**, I chose to use two-layers of GRU units, that are faster to
+train than LSTMs, followed by three fully connected layers and a soft-max output layer.
+
+To regularise the network, I inject gaussian noise at the input layer and at the level of the first and third fully-connected layer.
+
+{% highlight python %}
+# recurrent layers
+L = GaussianNoise(0.1)(L)
+L = GRU(500,return_sequences=True)(L)
+L = GRU(500,return_sequences=True)(L)
+
+# fully-connected layers
+L = TimeDistributed(Dense(250))(L)
+L = GaussianNoise(0.05)(L)
+L = Activation('tanh')(L)
+
+L = TimeDistributed(Dense(250))(L)
+L = Activation('tanh')(L)
+
+L = TimeDistributed(Dense(250))(L)
+L = GaussianNoise(0.05)(L)
+L = Activation('tanh')(L)
+
+# output layer
+L = TimeDistributed(Dense(nwords))(L)
+L = Activation('softmax')(L)
+
+out = L
+embed_model = Model(inputs=inp,outputs=concat)
+{% endhighlight %}
+
+The model obtains a top-1 (top-3) categorical **accuracy** of roughly 40(50)%, even though I
+did not spend much time tuning it.
+
+Samples of predicted words can be generated during training. Below I put two examples
+obtained after 30 and 90 epochs, respectively.
+
+| **epoch** | 30 |
+| **input** |`can`|`blockchain`|`technology`|`save`|`the`|`environment`|`<url>`|`<hashtag>`|`#learning`|`<url>`|`<stop>`|
+| **top-1** prediction | |`<hashtag>`|`<unk>`|`to`|`<unk>`|`<unk>`|`<url>`|`<hashtag>`|`#machinelearning`|`<hashtag>`|`<stop>`|
+| **top-2** prediction | | `you`|`<hashtag>`|`<unk>`|`machine`|`future`|`in`|`<url>`|`#ai`|`<stop>`|`<url>`|
+
+
+| **epoch** | 90 |
+| **input** |`calling`|`all`|`marketers`|`ai`|`for`|`marketing`|`and`|`product`|`innovation`|`is`|`now`|`available`|`this`|`non`|`tech`|`guide`|`to`|`<hashtag>`|`#ai`|`<url>`|
+| **top-1** prediction | |`all`|`<hashtag>`|`are`|`how`|`getting`|`goals`|`data`|`of`|`check`|`a`|`available`|`in`|`article`|`<unk>`|`<unk>`|`<url>`|`<url>`|`#machinelearning`|`<url>`|`<stop>`|
+| **top-2** prediction | |`<hashtag>`|`<user>`|`can`|`in`|`free`|`strategies`|`analytics`|`<url>`|`today`|`out`|`on`|`for`|`post`|`<number>`|`<number>`|`read`|`learn`|`#datascience`|`<stop>`|`w`|
+
 
 ## Generating sequences with beam search
 
+Now that we trained our model, how can we use to predict tweets? A straighforward
+application is obviously to use it to suggest the next word while typing a tweet. This can
+be achieved simply by evaluating the model on the first part of the text to obtain the
+most probable next word.  
+
+If we instead want to complete the full tweet starting from an intiial stub, we would need
+to compute joint probabilities over many word positions to select the most probably
+sequence. This would imply running a search over a tree with a branching factor equal to
+the number of words in the dictionary, which is clearly unfeasible.  
+
+A common solution is to construct an approximate using
+[beam search](https://en.wikipedia.org/wiki/Beam_search). Beam search is a breadth-first
+search algorithm that, at each step, expands only the top-N combinations according to some
+heuristic function. In our case, the heuristic function will be the joint probability of
+the candidate sequences.  
+
+Let's fix the beam width (i.e. the number of combinations that we will consider to 2).
+* In the first step, the beam search will choose the two most probable words, according to
+the model, say $\hat y_{11}$ and $\hat y_{12}$, each with an associated probability $\hat
+p_{11}(s)$ and $\hat p_{12}(s)$ (where $s$ is the stub).
+
+* In the second step, we will evaluate $\hat p_j(s,\hat y_{11})$ and $\hat p_j(s,\hat
+y_{12})$. For each of these these two candidate sequence we will choose the two most
+probable words $\hat y_{111}, \hat y_{112}, \hat y_{121}$ and $\hat y_{122}$.  We will now
+choose the two most probable sequences according to the joint esitated probabilites $\hat
+p_{1i} \cdot \hat p_{1ij}$
+
+* We repeat the previous step until all sequences end with a stop word (or the maximum
+number of iterations is reached).
+
+{: style="text-align: center" }
 ![twitter_rnn_beam_search.png](/assets/twitter_rnn_beam_search.png)
+
+Te implementation of the the algorithm is [here](https://github.com/musella/twitter_crawl/blob/master/python/models.py#L52).
+
+{% highlight python %}
+
+    # ------------------------------------------------------------------------------------------
+    def predict_next(self,seqs,log_probs0,nsuggestions):
+        """ Expand the next search level and return candidate sequences
+        
+        Arguments:
+        seqs        -- set of sequences currently in the beam
+        log_probs0  -- log-probabilities associated to the current sequences
+        nsuggetions -- number of suggested sequences to return (= beam width)
+        Returns 
+        candidates -- list of most probabile nsuggetions sequences
+        log_probs1 -- associated log-probabilities 
+        """
+
+        # check which sequences have already a stop word
+        candidates = []
+        log_probs1 = []
+        seqs_to_extend = []
+        log_probs0_to_extend = []
+        for seq,log_prob0 in zip(seqs,log_probs0):
+            if seq[-1] == self.stop_word:
+                candidates.append(seq)
+                log_probs1.append(log_prob0)
+            else:
+                seqs_to_extend.append(seq)
+                log_probs0_to_extend.append(log_prob0)
+                
+        ## print( self.tk.sequences_to_texts(seqs_to_extend) )
+
+        # run the model prediction for sequences that have not yet ended
+        if len(seqs_to_extend) > 0:
+            X = pad_sequences(seqs_to_extend,self.padto)
+            probs = self.model.predict(X)[:,-1,:]
+            if self.unk_word is not None:
+                probs[:,self.unk_word] = 0.
+
+            # extract the top nsuggestions for each sequence that needs to be expanded
+            preds = np.flip(probs.argsort(-1)[:,-nsuggestions:],-1)
+            # expand the current sequences with the new suggestions and compute the
+            # corresponding log-probabilities
+            for seq, log_prob0, pred, prob in zip(seqs_to_extend,log_probs0_to_extend,preds,probs):
+                seq = seq
+                for ipred in pred:
+                    ilog_prob = np.log(prob[ipred])
+                    candidates.append( seq+[ipred] )
+                    log_probs1.append( log_prob0+ilog_prob )
+
+        # extract and return the nsuggestions with largest log-probabilities
+        log_probs1 = np.array(log_probs1)
+        keep = np.flip( log_probs1.argsort(-1)[-nsuggestions:], -1 )
+		
+	return [ candidates[icand] for icand in keep], log_probs1[keep] 
+{% endhighlight %}
 
 ## Wrapping it all up in web application using Flask
 
-[app.py](https://github.com/musella/twitter_crawl/blob/master/flask_app/app.py)
+Ok. We are now ready to wrap everything up and serve our predictions, using for example a
+web application. The [Flask](http://flask.pocoo.org/) microframework can be efficiently
+used for this.  
+
+**Flask** allows to quickly develop web application serving dynamic content with python as the
+underlying engine. For this experiment, I exported two kind of services: **next word**
+prediction and **tweet generation**. Serving the model prediction requires very few lines of
+python code, and with a bit of java-script we can quicklu implement the client side.
 
 {% highlight python %}
 def run_beam_search(request,horizon):
@@ -274,8 +452,27 @@ def run_beam_search(request,horizon):
 def autocomplete():
         what = request.json["what"]
         if what == "get_next_word":
-                return run_beam_search(request,1)
+            return run_beam_search(request,1)
         elif what == 'get_sentence':
-return run_beam_search(request,50)
+			return run_beam_search(request,50)
 
 {% endhighlight %}
+
+The whole flask application is available here
+[here](https://github.com/musella/twitter_crawl/blob/master/flask_app) and it is running
+live at [this](http://musella.pythonanywhere.com/) url.
+
+As an **example**, I typed `Machine learning` and `Interesting article` as stub of a tweet,
+this is what the model returns.
+
+```
+Machine learning with python scikit learn and tensorflow <url> <hashtag> #machinelearning <hashtag> #datascience <hashtag> #ad <stop>
+Machine learning algorithms are not one size fits all <hashtag> #machinelearning <url> <stop>
+```
+
+```
+Interesting article by <user> at <hashtag> #neurips2018 check out our poster by <user> at <hashtag> #neurips2018 <url> <stop>
+Interesting article shows that people who do we need about <hashtag> #artificialintelligence <hashtag> #artificialintelligence <hashtag> #iot <stop>
+```
+
+That's all for this experiment! Hope you enjoyed it.
