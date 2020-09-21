@@ -5,11 +5,14 @@
 layout: home
 ---
 
-I am a **Data Scientist** and **PhD** in **High Energy Physics**. In my work, I use machine learning
-to investigate the nature of fundamental interactions at the CERN Large Hadron Collider.
+I am a **Data Scientist** and **PhD** in **High Energy Physics**. For almost 15 years I used
+machine learning to investigate the nature of fundamental interactions at the CERN Large Hadron Collider.
 
-**I like playing with** all sorts of **data**: text, images, graphs, time series... I recently
-started this blog to collect my
-experiments in applying machine learning algorithms to these datasets.  
-Feel free to contact me on twitter or linkedin if you have any question or suggestion on
-the content.
+Currently, I help industrial clients in their **digital transformation** journey.
+
+**I like working with** all sorts of **data**: text, images, graphs, time series...
+In this blog I collect my experiments in applying machine learning algorithms to these datasets.  
+
+If you want to reach out, please contact me on twitter or linkedin.
+
+Enjoy the reading!
